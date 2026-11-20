@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Умный глазок Xiaobai M1</title>
+<style>
+:root{--bg:#0f141c;--card:#18202c;--line:#283448;--txt:#eef2f7;--muted:#94a3b8;--acc:#2563eb;--ok:#0d9488;--warn:#b45309;--err:#b91c1c;--thumb-ar:9/16}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding:12px;max-width:780px;margin:0 auto;line-height:1.45}
+h1{font-size:1.22rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.badge{font-size:.78rem;padding:4px 10px;border-radius:999px;background:#1e293b;border:1px solid var(--line);color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:.98rem;margin-bottom:10px;color:#cbd5e1}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:540px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:#111823;border:1px solid var(--line);border-radius:10px;padding:9px}
+.stat .k{font-size:.73rem;color:var(--muted)}
+.stat .v{font-size:.92rem;font-weight:600;margin-top:2px;word-break:break-word}
+.btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.btns-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px}
+button,.btn{appearance:none;border:1px solid var(--line);background:#223044;color:var(--txt);padding:10px 12px;border-radius:10px;font-size:.88rem;font-weight:600;cursor:pointer;text-align:center;text-decoration:none;transition:.15s}
+button:hover,.btn:hover{background:#2c3e58}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+button.warn{background:var(--warn);border-color:var(--warn);color:#fff}
+button.danger{background:var(--err);border-color:var(--err);color:#fff}
+.ptt-box{margin-top:10px;padding:10px;border-radius:10px;background:#111823;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.ptt-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ptt-row button{flex:1 1 180px}
+.subhint{font-size:.76rem;color:var(--muted)}
+.viewer{margin-top:10px;display:flex;flex-direction:column;align-items:center;background:#090d12;border-radius:12px;overflow:hidden;border:1px solid var(--line);min-height:160px;justify-content:center}
+.viewer img,.viewer video{max-width:100%;max-height:72vh;display:block}
+.hint{font-size:.82rem;color:var(--muted);padding:18px;text-align:center}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:540px){.gallery{grid-template-columns:repeat(3,1fr)}}
+.item{background:#111823;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.item img{width:100%;aspect-ratio:var(--thumb-ar);object-fit:cover;background:#090d12;cursor:pointer}
+.item .meta{padding:8px;font-size:.78rem;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.hw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:480px){.hw-grid{grid-template-columns:1fr}}
+select,textarea,input{width:100%;background:#0c1118;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.86rem;font-family:inherit}
+textarea{font-family:ui-monospace,Consolas,monospace;font-size:.8rem;min-height:220px;resize:vertical}
+label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:4px}
+#toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid var(--acc);color:#fff;padding:9px 16px;border-radius:999px;font-size:.85rem;display:none;z-index:99;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<h1>
+  <span>👁 Умный глазок Xiaobai M1</span>
+  <span class="badge" id="st_wake">Связь...</span>
+</h1>
+
+<div class="card">
+  <div class="stats">
+    <div class="stat"><div class="k">Заряд АКБ</div><div class="v" id="st_bat">—</div></div>
+    <div class="stat"><div class="k">Wi-Fi / Сигнал</div><div class="v" id="st_net">—</div></div>
+    <div class="stat"><div class="k">Карта MicroSD</div><div class="v" id="st_sd">—</div></div>
+    <div class="stat"><div class="k">Системное время</div><div class="v" id="st_time">—</div></div>
+  </div>
+  <div class="btns-top">
+    <button class="primary" onclick="takeSnap()">📸 Живой снимок</button>
+    <button class="primary" onclick="recordClip(10)">🎬 Запись 10с</button>
+    <button class="ok" id="btn_stream" onclick="toggleStream()">▶️ Живой эфир (MJPEG)</button>
+    <button onclick="keepAwake(90)">☕ Не спать +90 сек</button>
+  </div>
+  <div class="viewer" id="viewer">
+    <div class="hint">Нажмите «▶️ Живой эфир», «📸 Живой снимок» или выберите запись из архива ниже</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔊 Голосовой ответ за дверь и живой интерком</h2>
+  <div class="btns">
+    <button class="ok" onclick="say('03_fastreply')">🏃 Сейчас открою</button>
+    <button class="primary" onclick="say('04_fastreply')">🛍 Доставку у двери</button>
+    <button onclick="say('01_fastreply')">❓ Кто вы и по какому вопросу?</button>
+    <button class="danger" onclick="say('02_fastreply')">📹 Внимание! Ведётся запись</button>
+  </div>
+  <div class="ptt-box">
+    <div class="ptt-row">
+      <button id="btn_custom_say" onclick="say('05_custom')" disabled>🗣 Своя фраза (не записана)</button>
+      <button id="btn_ptt_live" class="primary" onclick="toggleMicRecord(false)">🎙 Сказать в микрофон за дверь</button>
+      <button id="btn_ptt_save" onclick="toggleMicRecord(true)">💾 Записать «Свою фразу»</button>
+    </div>
+    <div class="ptt-row">
+      <input type="file" id="voice_file" accept="audio/*" style="display:none" onchange="handleVoiceFile(this)">
+      <button style="padding:7px 10px;font-size:.8rem" onclick="pickAudioFile(false)">📁 Озвучить аудиофайл</button>
+      <button style="padding:7px 10px;font-size:.8rem" onclick="pickAudioFile(true)">📁 Сохранить файл как «Свою фразу»</button>
+    </div>
+    <div class="subhint" id="ptt_hint">💡 Вы также можете просто записать обычное голосовое сообщение микрофоном прямо в чат Telegram-бота — глазок сразу озвучит его за дверью!</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🛡 Датчик движения PIR, Тихий час, камера и экономия батареи</h2>
+  <div class="hw-grid">
+    <div>
+      <label>Датчик движения (PIR)</label>
+      <select id="hw_pir" onchange="setHw('pir',this.value)">
+        <option value="1">🟢 Включён (звонок + движение)</option>
+        <option value="0">⚪ Выключен (только звонок — макс. АКБ)</option>
+      </select>
+    </div>
+    <div>
+      <label>Ночной «Тихий час» (23:00–08:00)</label>
+      <select id="hw_dnd" onchange="setHw('dnd',this.value)">
+        <option value="0">Выключен</option>
+        <option value="1">🌙 Включён (без звука ночью, тихий TG)</option>
+      </select>
+    </div>
+    <div>
+      <label>Задержка стояния у двери до записи</label>
+      <select id="hw_stay" onchange="setHw('stay',this.value)">
+        <option value="0">Мгновенно (0 сек)</option>
+        <option value="5">5 секунд</option>
+        <option value="10">10 секунд (оптимально)</option>
+        <option value="15">15 секунд</option>
+        <option value="20">20 секунд</option>
+      </select>
+    </div>
+    <div>
+      <label>Пауза между записями движения</label>
+      <select id="hw_interval" onchange="setHw('interval',this.value)">
+        <option value="0">Без паузы</option>
+        <option value="15">15 секунд</option>
+        <option value="30">30 секунд</option>
+        <option value="60">60 секунд (экономия АКБ)</option>
+        <option value="180">3 минуты (макс. экономия)</option>
+      </select>
+    </div>
+    <div>
+      <label>Автоответ голосом при тревоге</label>
+      <select id="hw_autoreply" onchange="setHw('auto_reply',this.value)">
+        <option value="off">Выключен</option>
+        <option value="04_fastreply">🛍 Оставьте доставку у двери</option>
+        <option value="03_fastreply">🏃 Подождите минуту, сейчас открою</option>
+        <option value="01_fastreply">❓ Здравствуйте! Кто вы?</option>
+        <option value="02_fastreply">📹 Внимание! Ведётся видеозапись</option>
+        <option value="05_custom">🗣 Своя записанная фраза</option>
+      </select>
+    </div>
+    <div>
+      <label>Когда включать автоответ голосом</label>
+      <select id="hw_automode" onchange="setHw('auto_only_bell',this.value)">
+        <option value="1">🔔 Только при нажатии звонка</option>
+        <option value="0">🚶 На звонок и любое движение</option>
+      </select>
+    </div>
+    <div>
+      <label>Часовой пояс (штамп времени видео)</label>
+      <select id="hw_tz" onchange="setHw('tz',this.value)">
+        <option value="EET-2">Калининград (UTC+2)</option>
+        <option value="MSK-3">Москва (UTC+3, MSK-3)</option>
+        <option value="SAMT-4">Самара (UTC+4)</option>
+        <option value="YEKT-5">Екатеринбург (UTC+5)</option>
+        <option value="OMST-6">Омск (UTC+6)</option>
+        <option value="KRAT-7">Красноярск (UTC+7)</option>
+        <option value="IRKT-8">Иркутск (UTC+8)</option>
+        <option value="VLAT-10">Владивосток (UTC+10)</option>
+      </select>
+    </div>
+    <div>
+      <label>Ночная ИК-подсветка</label>
+      <select id="hw_night" onchange="setHw('night',this.value)">
+        <option value="0">🌙 Автоматически</option>
+        <option value="1">Выключена</option>
+        <option value="2">Всегда включена</option>
+      </select>
+    </div>
+    <div>
+      <label>WDR (против засветки подъезда)</label>
+      <select id="hw_wdr" onchange="setHw('wdr',this.value)">
+        <option value="0">Выключен</option>
+        <option value="1">☀️ Включён</option>
+      </select>
+    </div>
+    <div>
+      <label>Выпрямление линзы «рыбий глаз» (LDC)</label>
+      <select id="hw_ldc" onchange="setHw('ldc',this.value)">
+        <option value="1">🔭 Выпрямлять края</option>
+        <option value="0">Широкий обзор без обрезки</option>
+      </select>
+    </div>
+    <div>
+      <label>Зажигать экран внутри при звонке</label>
+      <select id="hw_bscreen" onchange="setHw('bscreen',this.value)">
+        <option value="0">Нет (экономия батареи)</option>
+        <option value="1">📱 Да, включать экран</option>
+      </select>
+    </div>
+    <div>
+      <label>Поворот наружной камеры и видео</label>
+      <select id="hw_rot" onchange="setHw('rot',this.value)">
+        <option value="0">0° горизонтально 16:9 (штатно)</option>
+        <option value="90">90° по часовой 9:16 (узкая дверь)</option>
+        <option value="270">270° против часовой 9:16</option>
+        <option value="180">180° перевёрнуто</option>
+      </select>
+    </div>
+    <div>
+      <label>Ожидание кнопок Telegram после звонка</label>
+      <select id="hw_keep" onchange="setHw('keep_awake',this.value)">
+        <option value="20">20 секунд (макс. экономия)</option>
+        <option value="35">35 секунд (рекомендуется)</option>
+        <option value="60">60 секунд</option>
+        <option value="90">90 секунд</option>
+      </select>
+    </div>
+    <div>
+      <label>Пробуждение по обычному Ping (WoWLAN)</label>
+      <select id="hw_pingwake" onchange="setHw('ping_wake',this.value)">
+        <option value="0">Выкл (только UDP пакет — экономия)</option>
+        <option value="1">📡 Вкл (просыпаться от любого ping)</option>
+      </select>
+    </div>
+    <div>
+      <label>Уведомление в Telegram о разряде АКБ</label>
+      <select id="hw_lowbat" onchange="setHw('low_bat',this.value)">
+        <option value="20">🪫 При 20% и ниже</option>
+        <option value="15">🪫 При 15% и ниже</option>
+        <option value="30">🪫 При 30% и ниже</option>
+        <option value="0">Выключено</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h2 style="margin:0">🎞 Архив записей на MicroSD</h2>
+    <button style="padding:6px 12px;font-size:.82rem" onclick="loadList();loadSnaps();">🔄 Обновить</button>
+  </div>
+  <div class="gallery" id="gallery"><div class="hint">Загрузка списка...</div></div>
+  <div id="snaps_wrap" style="display:none;margin-top:14px">
+    <h2 style="margin-bottom:8px">📸 Снимки с экрана (/app/sd/snapshots)</h2>
+    <div class="gallery" id="snaps_gallery"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🏠 Home Assistant (MQTT Auto-Discovery)</h2>
+  <div class="hw-grid">
+    <div>
+      <label>Интеграция MQTT</label>
+      <select id="hw_mqtt" onchange="setHw('mqtt_enable',this.value)">
+        <option value="0">Выключена (0 мА — режим ожидания)</option>
+        <option value="1">🏠 Включена (при наличии MQTT_HOST)</option>
+      </select>
+    </div>
+    <div>
+      <label>Адрес брокера Mosquitto / HA</label>
+      <input id="mq_host" type="text" placeholder="192.168.1.10" oninput="this.dataset.dirty='1'">
+    </div>
+    <div>
+      <label>Порт</label>
+      <input id="mq_port" type="number" min="1" max="65535" placeholder="1883" oninput="this.dataset.dirty='1'">
+    </div>
+    <div>
+      <label>Логин MQTT</label>
+      <input id="mq_user" type="text" placeholder="mqtt_user" autocomplete="off" oninput="this.dataset.dirty='1'">
+    </div>
+    <div>
+      <label>Пароль MQTT</label>
+      <input id="mq_pass" type="password" placeholder="Пароль MQTT (если требуется)" autocomplete="new-password">
+    </div>
+    <div>
+      <label>Префикс топиков</label>
+      <input id="mq_prefix" type="text" placeholder="xiaobai_m1" oninput="this.dataset.dirty='1'">
+    </div>
+  </div>
+  <div class="btns">
+    <button class="primary" onclick="saveMqtt(false)">💾 Сохранить MQTT</button>
+    <button class="ok" onclick="saveMqtt(true)">🏠 Проверить MQTT (HA)</button>
+  </div>
+  <div class="subhint" id="mq_res" style="margin-top:8px">После успешной проверки в Home Assistant сразу появятся камера, звонок, движение, батарея (% и В), Wi-Fi и MicroSD.</div>
+</div>
+
+<div class="card">
+  <h2>⚙️ Текстовая конфигурация (/app/sd/eye.conf)</h2>
+  <textarea id="conf_box" spellcheck="false"></textarea>
+  <div class="btns">
+    <button class="primary" onclick="saveConf()">💾 Сохранить eye.conf</button>
+    <button class="ok" onclick="testTg()">✈️ Проверить пульт Telegram</button>
+    <button class="warn" onclick="putSleep()">💤 Усыпить сейчас (1 сек)</button>
+    <button class="danger" onclick="rebootEye()">🔄 Перезагрузить</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let isStreaming=false, micCtx=null, micStream=null, micProc=null, micChunks=[], micSaveMode=false, fileSaveMode=false;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.display='block';
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>el.style.display='none',3400);
+}
+async function api(q,opts){
+  const r=await fetch('/cgi-bin/api.cgi?'+q,opts);
+  return r.json();
+}
+function pcm16ToAlaw(pcm){
+  let v=pcm<-32768?-32768:(pcm>32767?32767:pcm);
+  let sign=0x80;
+  if(v<0){sign=0x00;v=-v-1;if(v<0)v=0;}
+  v>>=3;
+  let aval=0;
+  if(v>=256){
+    let seg=7;
+    for(let s=1;s<8;s++){if(v<(0x100<<s)){seg=s;break;}}
+    aval=(seg<<4)|((v>>(seg+3))&0x0F);
+  }else{
+    aval=v>>4;
+  }
+  return (aval|sign)^0xD5;
+}
+function floatTo8kAlaw(floatBuf,inRate){
+  const ratio=inRate/8000;
+  const outLen=Math.min(240000,Math.floor(floatBuf.length/ratio));
+  const paddedLen=Math.max(320,Math.ceil(outLen/320)*320);
+  const out=new Uint8Array(paddedLen);
+  out.fill(0xD5);
+  for(let i=0;i<outLen;i++){
+    const idx=i*ratio;
+    const i0=Math.floor(idx);
+    const frac=idx-i0;
+    const s0=floatBuf[i0]||0;
+    const s1=floatBuf[i0+1]!==undefined?floatBuf[i0+1]:s0;
+    const sample=Math.round((s0+(s1-s0)*frac)*32767);
+    out[i]=pcm16ToAlaw(sample);
+  }
+  return out;
+}
+async function uploadAlaw(alawBytes,saveSlot){
+  toast(saveSlot?'Сохраняю и воспроизвожу свою фразу...':'Озвучиваю за дверью...');
+  const d=await api('action=speak&save='+(saveSlot?'1':'0'),{
+    method:'POST',
+    headers:{'Content-Type':'application/octet-stream'},
+    body:alawBytes
+  });
+  if(d.ok){
+    toast(saveSlot?'Своя фраза сохранена и озвучена!':'Голос озвучен за дверью!');
+    loadStatus();
+  }else{
+    toast(d.error||'Ошибка отправки голоса');
+  }
+}
+async function toggleMicRecord(saveSlot){
+  const btnLive=document.getElementById('btn_ptt_live');
+  const btnSave=document.getElementById('btn_ptt_save');
+  if(micCtx){
+    const sr=micCtx.sampleRate||48000;
+    try{micProc.disconnect();micStream.getTracks().forEach(t=>t.stop());await micCtx.close();}catch(e){}
+    micCtx=null;micStream=null;micProc=null;
+    btnLive.textContent='🎙 Сказать в микрофон за дверь';btnLive.className='primary';
+    btnSave.textContent='💾 Записать «Свою фразу»';btnSave.className='';
+    const total=micChunks.reduce((a,b)=>a+b.length,0);
+    if(total<sr*0.2){toast('Слишком короткая запись');return;}
+    const merged=new Float32Array(total);
+    let off=0;
+    for(const c of micChunks){merged.set(c,off);off+=c.length;}
+    micChunks=[];
+    await uploadAlaw(floatTo8kAlaw(merged,sr),micSaveMode);
+    return;
+  }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    toast('В HTTP без HTTPS браузер скрыл микрофон — нажмите кнопку «📁 Из аудиофайла» ниже!');
+    return;
+  }
+  try{
+    await keepAwake(60);
+    micSaveMode=!!saveSlot;
+    micChunks=[];
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
+    micCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=micCtx.createMediaStreamSource(micStream);
+    micProc=micCtx.createScriptProcessor(4096,1,1);
+    micProc.onaudioprocess=e=>{
+      const ch=e.inputBuffer.getChannelData(0);
+      micChunks.push(new Float32Array(ch));
+      const sec=micChunks.reduce((a,b)=>a+b.length,0)/(micCtx.sampleRate||48000);
+      if(sec>=25)toggleMicRecord(micSaveMode);
+    };
+    src.connect(micProc);
+    micProc.connect(micCtx.destination);
+    if(saveSlot){
+      btnSave.textContent='⏹ Стоп и сохранить фразу';btnSave.className='danger';
+    }else{
+      btnLive.textContent='⏹ Стоп и отправить за дверь';btnLive.className='danger';
+    }
+    toast('Говорите в микрофон (до 25 сек), затем нажмите «⏹ Стоп»');
+  }catch(err){
+    toast('Доступ к микрофону запрещён браузером — используйте «📁 Озвучить аудиофайл»');
+  }
+}
+function pickAudioFile(saveSlot){
+  fileSaveMode=!!saveSlot;
+  const inp=document.getElementById('voice_file');
+  inp.value='';
+  inp.click();
+}
+async function handleVoiceFile(inp){
+  const f=inp.files&&inp.files[0];
+  if(!f)return;
+  const ab=await f.arrayBuffer();
+  const nm=(f.name||'').toLowerCase();
+  if((nm.endsWith('.oga')||nm.endsWith('.ogg')||nm.endsWith('.opus'))&&ab.byteLength<=524288){
+    toast('Отправляю голосовое Opus напрямую в глазок...');
+    const d=await api('action=speak_ogg&save='+(fileSaveMode?'1':'0'),{method:'POST',body:ab});
+    if(d.ok){toast(fileSaveMode?'Своя фраза сохранена и озвучена!':'Голосовое озвучено за дверью!');loadStatus();}
+    else toast(d.error||'Ошибка декодирования Opus');
+    return;
+  }
+  try{
+    toast('Конвертирую аудио в 8 кГц G.711A...');
+    const actx=new (window.AudioContext||window.webkitAudioContext)();
+    const decoded=await actx.decodeAudioData(ab.slice(0));
+    const ch0=decoded.getChannelData(0);
+    const alaw=floatTo8kAlaw(ch0,decoded.sampleRate);
+    await actx.close();
+    await uploadAlaw(alaw,fileSaveMode);
+  }catch(e){
+    if(ab.byteLength<=524288){
+      const d=await api('action=speak_ogg&save='+(fileSaveMode?'1':'0'),{method:'POST',body:ab});
+      if(d.ok){toast('Голосовое озвучено за дверью!');loadStatus();return;}
+    }
+    toast('Не удалось декодировать аудиофайл');
+  }
+}
+function stopStreamUI(keepHint){
+  const img=document.getElementById('live_mjpeg');
+  if(img)img.src='';
+  isStreaming=false;
+  const btn=document.getElementById('btn_stream');
+  if(btn){btn.textContent='▶️ Живой эфир (MJPEG)';btn.className='ok';}
+  if(keepHint){
+    document.getElementById('viewer').innerHTML='<div class="hint">Живой эфир остановлен</div>';
+  }
+}
+function toggleStream(){
+  if(isStreaming){
+    stopStreamUI(true);
+    toast('Живой эфир остановлен');
+    return;
+  }
+  isStreaming=true;
+  const btn=document.getElementById('btn_stream');
+  btn.textContent='⏹ Стоп эфир';
+  btn.className='danger';
+  document.getElementById('viewer').innerHTML='<img id="live_mjpeg" src="/cgi-bin/stream.cgi?t='+Date.now()+'" alt="MJPEG Live">';
+  toast('Запущен живой видеопоток (~4 кадр/с, автостоп 2 мин)');
+}
+function applyStatus(d){
+  if(!d||!d.ok)return;
+  document.getElementById('st_bat').textContent=d.bat+'%'+(d.bat_v?(' · '+d.bat_v+' В'):'');
+  const rssiStr=(d.rssi&&d.rssi!=='?')?(' · '+d.rssi+' dBm'):'';
+  document.getElementById('st_net').textContent=(d.ssid||'Wi-Fi')+rssiStr+' ('+d.ip+')';
+  document.getElementById('st_sd').textContent=d.sd;
+  document.getElementById('st_time').textContent=d.time+(d.dnd_active?' 🌙':'');
+  document.getElementById('st_wake').textContent='Бодрствует: '+d.wake_rem+' с';
+  const cbtn=document.getElementById('btn_custom_say');
+  if(cbtn){
+    cbtn.disabled=!d.custom_voice;
+    cbtn.textContent=d.custom_voice?'🗣 Своя фраза':'🗣 Своя фраза (не записана)';
+    cbtn.className=d.custom_voice?'ok':'';
+  }
+  const map={
+    hw_pir:d.pir,hw_dnd:d.dnd??'0',hw_stay:d.stay,hw_interval:d.interval,
+    hw_autoreply:d.auto_reply||'off',hw_automode:d.auto_only_bell??'1',
+    hw_tz:d.tz||'MSK-3',hw_night:d.night,hw_wdr:d.wdr,hw_ldc:d.ldc,
+    hw_bscreen:d.bscreen,hw_rot:d.cam_rotate,hw_keep:d.keep_awake,
+    hw_pingwake:d.ping_wake??'0',hw_lowbat:d.low_bat??'20',hw_mqtt:d.mqtt_enable??'0'
+  };
+  for(const [id,val] of Object.entries(map)){
+    const el=document.getElementById(id);
+    if(el&&val!==undefined)el.value=String(val);
+  }
+  const mqMap={
+    mq_host:d.mqtt_host??'',
+    mq_port:d.mqtt_port??'1883',
+    mq_user:d.mqtt_user??'',
+    mq_prefix:d.mqtt_prefix??'xiaobai_m1'
+  };
+  for(const [id,val] of Object.entries(mqMap)){
+    const el=document.getElementById(id);
+    if(el&&!el.dataset.dirty&&document.activeElement!==el)el.value=String(val);
+  }
+  const mp=document.getElementById('mq_pass');
+  if(mp)mp.placeholder=d.mqtt_has_pass?'•••••••• (сохранён)':'Пароль MQTT (если требуется)';
+  const cr=String(d.cam_rotate||'90');
+  document.documentElement.style.setProperty('--thumb-ar',(cr==='0'||cr==='180')?'16/9':'9/16');
+}
+async function loadStatus(){
+  try{
+    applyStatus(await api('action=status'));
+  }catch(e){
+    document.getElementById('st_wake').textContent='Спит (<1 мА) / нет связи';
+  }
+}
+async function setHw(k,v){
+  toast('Сохраняю настройку...');
+  try{
+    const d=await api('action=set_hw&key='+encodeURIComponent(k)+'&val='+encodeURIComponent(v));
+    applyStatus(d);
+    toast('Настройка сохранена');
+    if(['rot','keep_awake','auto_reply','auto_only_bell','dnd','tz','ping_wake','low_bat','mqtt_enable'].includes(k))loadConf();
+  }catch(e){toast('Ошибка сохранения');}
+}
+async function takeSnap(){
+  if(isStreaming)stopStreamUI(false);
+  toast('Делаю живой снимок...');
+  const d=await api('action=snap');
+  if(d.ok){
+    document.getElementById('viewer').innerHTML='<img src="'+d.url+'" alt="Live">';
+    toast('Снимок обновлён');
+  }else toast(d.error||'Ошибка снимка');
+}
+async function recordClip(sec){
+  toast('Пишу видео '+sec+' сек со звуком...');
+  try{
+    const d=await api('action=record&sec='+sec);
+    if(d.ok){
+      toast('Запись '+sec+' сек запущена — появится в архиве через ~'+(sec+3)+' сек');
+      setTimeout(()=>{loadList();loadStatus();},(sec+4)*1000);
+    }else toast(d.error||'Ошибка запуска записи');
+  }catch(e){toast('Ошибка связи с глазком');}
+}
+function showSnapImg(url){
+  if(isStreaming)stopStreamUI(false);
+  const v=document.getElementById('viewer');
+  v.innerHTML='<img src="'+url+'" alt="Snapshot">';
+  v.scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function loadSnaps(){
+  const wrap=document.getElementById('snaps_wrap');
+  const g=document.getElementById('snaps_gallery');
+  if(!wrap||!g)return;
+  try{
+    const items=await api('action=snaps&limit=12');
+    if(!items||!items.length){wrap.style.display='none';return;}
+    wrap.style.display='block';
+    g.innerHTML=items.map(it=>'<div class="item"><img src="'+it.url+'" loading="lazy" onclick="showSnapImg(\''+it.url+'\')"><div class="meta"><span onclick="showSnapImg(\''+it.url+'\')" style="cursor:pointer">'+it.name.replace(/\.jpg$/,'')+'</span><a class="btn" style="padding:3px 7px;font-size:.74rem" href="'+it.url+'" download>⬇ '+it.size_kb+'КБ</a></div></div>').join('');
+  }catch(e){}
+}
+function playVideo(mp4){
+  if(isStreaming)stopStreamUI(false);
+  const v=document.getElementById('viewer');
+  v.innerHTML='<video src="'+mp4+'" controls autoplay playsinline></video>';
+  v.scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function say(snd){
+  toast('Воспроизвожу на внешнем динамике...');
+  const d=await api('action=say&snd='+encodeURIComponent(snd));
+  toast(d.ok?'Озвучено за дверью!':(d.error||'Ошибка'));
+}
+async function keepAwake(s){
+  await api('action=awake&sec='+s);
+  toast('Время бодрствования продлено');
+  loadStatus();
+}
+async function putSleep(){
+  sleepHoldUntil=Date.now()+15000;
+  if(isStreaming)stopStreamUI(true);
+  await api('action=sleep');
+  document.getElementById('st_wake').textContent='Спит (<1 мА)';
+  toast('Глазок выключил питание SoC и перешёл в глубокий сон (< 1 мА)');
+}
+async function loadList(){
+  const g=document.getElementById('gallery');
+  try{
+    const items=await api('action=list&limit=36');
+    if(!items.length){g.innerHTML='<div class="hint">Записей пока нет</div>';return;}
+    g.innerHTML=items.map(it=>{
+      const lbl=it.label||it.rel.split('/').pop();
+      const thumb=it.jpg?('<img src="'+it.jpg+'" loading="lazy" onclick="playVideo(\''+it.mp4+'\')">'):
+        ('<div class="hint" style="cursor:pointer" onclick="playVideo(\''+it.mp4+'\')">▶ '+lbl+'</div>');
+      return '<div class="item">'+thumb+'<div class="meta"><span onclick="playVideo(\''+it.mp4+'\')" style="cursor:pointer">▶ '+lbl+'</span><a class="btn" style="padding:3px 7px;font-size:.74rem" href="'+it.mp4+'" download>⬇ '+it.size_kb+'КБ</a></div></div>';
+    }).join('');
+  }catch(e){g.innerHTML='<div class="hint">Ошибка чтения архива</div>';}
+}
+async function loadConf(){
+  const r=await fetch('/cgi-bin/api.cgi?action=get_conf');
+  document.getElementById('conf_box').value=await r.text();
+}
+async function saveConf(){
+  const body=document.getElementById('conf_box').value;
+  toast('Сохраняю /app/sd/eye.conf...');
+  const d=await api('action=save_conf',{method:'POST',body});
+  toast(d.ok?'Настройки сохранены и применены!':(d.error||'Ошибка сохранения'));
+  setTimeout(loadStatus,1200);
+}
+async function testTg(){
+  toast('Отправляю пульт и тестовый снимок в Telegram...');
+  const d=await api('action=tg_test');
+  toast(d.ok?'Пульт отправлен в Telegram!':('Ошибка: '+(d.error||'')));
+}
+async function saveMqtt(doTest){
+  const clean=v=>String(v||'').replace(/[\r\n]/g,'').trim();
+  const host=clean(document.getElementById('mq_host').value);
+  const port=clean(document.getElementById('mq_port').value)||'1883';
+  const user=clean(document.getElementById('mq_user').value);
+  const pass=String(document.getElementById('mq_pass').value||'').replace(/[\r\n]/g,'');
+  const pfx=clean(document.getElementById('mq_prefix').value)||'xiaobai_m1';
+  const en=document.getElementById('hw_mqtt').value;
+  const keep=pass.length>0?'0':'1';
+  const resEl=document.getElementById('mq_res');
+  toast('Сохраняю настройки MQTT...');
+  const body=[
+    'MQTT_ENABLE='+en,
+    'MQTT_HOST='+host,
+    'MQTT_PORT='+port,
+    'MQTT_USER='+user,
+    'MQTT_PREFIX='+pfx,
+    'MQTT_PASS_KEEP='+keep,
+    'MQTT_PASS='+pass
+  ].join('\n')+'\n';
+  try{
+    const d=await api('action=save_mqtt',{method:'POST',body});
+    if(!d.ok){
+      toast(d.error||'Ошибка сохранения MQTT');
+      if(resEl)resEl.textContent='⚠️ '+(d.error||'Ошибка сохранения MQTT');
+      return;
+    }
+    ['mq_host','mq_port','mq_user','mq_prefix'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.dataset.dirty='';
+    });
+    document.getElementById('mq_pass').value='';
+    applyStatus(d);
+    loadConf();
+    if(!doTest){
+      toast('Настройки MQTT сохранены');
+      if(resEl)resEl.textContent='✅ Настройки MQTT сохранены.';
+      return;
+    }
+    toast('Проверяю подключение к Mosquitto / Home Assistant...');
+    const t=await api('action=mqtt_test');
+    if(t.ok){
+      const msg=t.msg||'Успешно! Устройство добавлено в Home Assistant.';
+      toast(msg);
+      if(resEl)resEl.textContent='✅ '+msg;
+    }else{
+      const err=t.error||'Ошибка MQTT';
+      toast(err);
+      if(resEl)resEl.textContent='⚠️ '+err;
+    }
+  }catch(e){
+    toast('Ошибка связи с глазком');
+  }
+}
+async function rebootEye(){
+  if(!confirm('Перезагрузить умный глазок?'))return;
+  if(isStreaming)stopStreamUI(false);
+  await api('action=reboot');
+  toast('Глазок перезагружается...');
+}
+let lastUserTs=Date.now(),sleepHoldUntil=0;
+function markUserActive(){lastUserTs=Date.now();sleepHoldUntil=0;}
+['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,markUserActive,{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()>=sleepHoldUntil){lastUserTs=Date.now();loadStatus();}});
+loadStatus(); loadList(); loadSnaps(); loadConf();
+setInterval(()=>{
+  if(document.hidden||Date.now()<sleepHoldUntil)return;
+  if(!isStreaming&&Date.now()-lastUserTs>120000)return;
+  loadStatus();
+},10000);
+</script>
+</body>
+</html>

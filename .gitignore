@@ -1,0 +1,38 @@
+# Release binary archives (attach to GitHub Releases instead of committing to Git)
+releases/
+*.zip
+*.img
+*.squashfs
+*.bin
+*.uImage
+
+# Private device backups, user configs & secrets (NEVER commit!)
+backup_*/
+backup_orig/
+sd_backup*/
+eye.conf
+eye-bot.conf.local
+*.key
+*.pem
+*.crt
+*.p12
+*.ovpn
+.env
+*.secret
+
+# Build intermediates & caches
+out_patch/
+out_patch_435*/
+rootfs_435*/
+squashfs-root/
+tts_mp3/
+tts_wav/
+*.wav
+*.mp3
+*.mp4
+*.jpg
+*.jpeg
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
