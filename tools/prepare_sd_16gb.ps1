@@ -182,9 +182,12 @@ try {
         Write-Host "[SUCCESS] Firmware SD card is ready on $rootPath!" -ForegroundColor Green
         Write-Host "Next steps:" -ForegroundColor Cyan
         Write-Host "  1. Edit ${rootPath}eye.conf (optional - can also edit later via Web UI) and safely eject $rootPath."
-        Write-Host "  2. Keep USB UNPLUGGED, insert SD into peephole, power on via edge Power button, wait ~10-12s until blank backlit screen."
-        Write-Host "  3. Connect Micro-USB to PC, run connect_rndis.bat, then run: python install_firmware.py"
-        Write-Host "  4. Unplug USB and run cleanup_rndis_route.ps1."
+        Write-Host "  2. Keep USB UNPLUGGED and insert SD into the peephole."
+        Write-Host "  3. Enter Test Mode:"
+        Write-Host "     - On STOCK firmware: open Settings -> Page 3 (About), tap 5x within 4s (Row1-Left -> Row1-Right -> Row2-Left -> Row2-Right -> Row3), then tap 'TEST MODE' button in bottom row and wait ~10-12s."
+        Write-Host "     - On OUR patched 4.3.5_3319: just reboot on battery (IPC018_TESTMODE.file triggers Test Mode automatically) and wait ~10-12s until blank backlit screen."
+        Write-Host "  4. Connect Micro-USB to PC, run connect_rndis.bat, then run: python install_firmware.py"
+        Write-Host "  5. Unplug USB and run cleanup_rndis_route.ps1."
     } else {
         Write-VolumeCache -DriveLetter $driveLetter -ErrorAction SilentlyContinue
         Write-Host ""
