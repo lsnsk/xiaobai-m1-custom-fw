@@ -23,7 +23,7 @@
 
 | Файл | Размер | SHA-256 |
 | :--- | :--- | :--- |
-| `xiaobai-m1-4.0.9_2313-unbrick-sd.zip` | 12.70 МБ | `0c485fe7c3a323761d025b7ead6319e0cd5fd32911b7fabc81e2aecbbb04baad` |
+| `xiaobai-m1-4.0.9_2313-unbrick-sd.zip` | 12.70 МБ | `cf29aa813016905a2c051ec88c1a7b4e2840878fea91fd6e33e1bcebcc83a02f` |
 | `xiaobai-m1-4.3.5_3319-landscape.zip` | 12.77 МБ | `7123fe06e364d4f2171c641a73709176e96d5e66829131511dbca8b78ee3ce04` |
 | `xiaobai-m1-4.3.5_3319-portrait.zip` | 12.78 МБ | `2035c780a576c0860220670fc58be5f3fd6e8aaa61365d4aa84bae86696d71e7` |
 | `xiaobai-m1-openwrt-bot.zip` | 0.02 МБ | `0bc5307931fbc4ddc99719e3b99ad670155598738b2ffd8226b9e3700d1a4e15` |
