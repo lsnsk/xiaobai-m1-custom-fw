@@ -132,10 +132,10 @@ try {
         Write-Host ""
         Write-Host "[SUCCESS] UNBRICK SD card is ready on $rootPath!" -ForegroundColor Green
         Write-Host "Next steps:" -ForegroundColor Cyan
-        Write-Host "  1. Safely eject $rootPath and unplug USB cable from the peephole."
-        Write-Host "  2. Insert the SD card into the peephole."
-        Write-Host "  3. Power-cycle using the edge Power button (hold ~8-10s to force off, wait 3s, press Power to turn on)."
-        Write-Host "  4. Wait ~2 minutes for U-Boot to flash and reboot, then IMMEDIATELY delete tf_update.img from the SD card!"
+        Write-Host "  1. Safely eject $rootPath and UNPLUG USB cable from the peephole (important: USB connected enters BootROM instead of SD flash!)."
+        Write-Host "  2. Insert the SD card into the peephole (battery >= 30%)."
+        Write-Host "  3. Hold BOTH Power + Home buttons together for 6-8 seconds, then release (at ~4s MCU hard-reboots SoC and pulls GPIO0_0 LOW for U-Boot)."
+        Write-Host "  4. Wait ~2-3 minutes for U-Boot to flash tf_update.img and reboot, then delete tf_update.img from the SD card!"
     } elseif ($patchDir) {
         Write-Host "  Found firmware bundle in $patchDir -> staging patch_435 + IPC018_TESTMODE.file..." -ForegroundColor Yellow
         New-Item -Path (Join-Path $rootPath "IPC018_TESTMODE.file") -ItemType File -Force | Out-Null

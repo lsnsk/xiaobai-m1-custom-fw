@@ -23,9 +23,9 @@
 
 | Файл | Размер | SHA-256 |
 | :--- | :--- | :--- |
-| `xiaobai-m1-4.0.9_2313-unbrick-sd.zip` | 12.70 МБ | `cf29aa813016905a2c051ec88c1a7b4e2840878fea91fd6e33e1bcebcc83a02f` |
-| `xiaobai-m1-4.3.5_3319-landscape.zip` | 12.77 МБ | `7123fe06e364d4f2171c641a73709176e96d5e66829131511dbca8b78ee3ce04` |
-| `xiaobai-m1-4.3.5_3319-portrait.zip` | 12.78 МБ | `2035c780a576c0860220670fc58be5f3fd6e8aaa61365d4aa84bae86696d71e7` |
+| `xiaobai-m1-4.0.9_2313-unbrick-sd.zip` | 12.70 МБ | `8144a973f43d330f3fed468abc28d8097fad3302b758595741ad3dddcef12d9f` |
+| `xiaobai-m1-4.3.5_3319-landscape.zip` | 12.77 МБ | `c97d360528a413e68a380c5bf41ff4ef2b6b7ae5a8d9677eb31001b3f6c3c276` |
+| `xiaobai-m1-4.3.5_3319-portrait.zip` | 12.78 МБ | `205d0d62b0bc17c529d9a150b78497e7d7fb5f83a16d00d67cd6a8fe33d08377` |
 | `xiaobai-m1-openwrt-bot.zip` | 0.02 МБ | `0bc5307931fbc4ddc99719e3b99ad670155598738b2ffd8226b9e3700d1a4e15` |
 
 > Подробная пошаговая инструкция по установке, кнопкам корпуса (`Home` + `Power` на торце, **без отверстия Reset**), Wi-Fi OTA и восстановлению — внутри архивов (`INSTALL_RU.md`, `RECOVERY_RU.md`, `FAQ_RU.md`) и в папке [`docs/`](docs/).
